@@ -1,0 +1,7 @@
+<div><%= session[:username] %> has placed a wager of $<%= session[:wager] %></div>
+<div>The deck contains the following cards:</div>
+  <% session[:cards].each do |card| %>
+    <div>
+      <%= card[1] %> of <%= card[0] %>
+    </div>
+  <% end %>

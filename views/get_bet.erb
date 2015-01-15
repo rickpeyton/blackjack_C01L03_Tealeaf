@@ -1,0 +1,25 @@
+<form action='/set_bet' method='post' class="form-horizontal">
+  <div class="control-group">
+    <div class="controls">
+      <h3>Make a bet for this round.</h3>
+      <%= session[:username] %> has $500
+    </div>
+  </div>
+  <div class="control-group">
+    <label class="control-label" for="appendedPrependedInput">
+      Enter your wager
+    </label>
+    <div class="controls">
+      <div class="input-prepend input-append">
+        <span class="add-on">$</span>
+        <input class="span2" id="appendedPrependedInput" type="text" name='wager'>
+        <span class="add-on">.00</span>
+      </div>
+    </div>
+  </div>
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" class="btn">Place Bet</button>
+    </div>
+  </div>
+</form>
