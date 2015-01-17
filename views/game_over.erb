@@ -1,0 +1,8 @@
+<div>
+  <h2><%= session[:username] %> walks away from the table with $<%= session[:user_money] %>.00</h2>
+  <% if session[:user_money] > 500 %>
+    <h2><%= session[:username] %> is $<%= session[:user_money] - 500 %> richer!</h2>
+  <% elsif session[:user_money] < 500 %>
+    <h2><%= session[:username] %> is $<%= 500 - session[:user_money] %> poorer!</h2>
+  <% end %>
+</div>

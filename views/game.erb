@@ -1,7 +1,69 @@
-<div><%= session[:username] %> has placed a wager of $<%= session[:wager] %></div>
-<div>The deck contains the following cards:</div>
-  <% session[:cards].each do |card| %>
-    <div>
-      <%= card[1] %> of <%= card[0] %>
+<% if session[:message] != '' %>
+  <div><h1><%= session[:message] %></h1></div>
+  <div>
+    <form action="/play_again" method="post" class="form-inline">
+      Would you like to play again?
+      <button type="submit" class="btn btn-success" name="play_again" value="yes">Yes</button>
+      <button type="submit" class="btn btn-danger" name="play_again" value="no">No</button>
+    </form>
+  </div>
+<% else %>
+  <div><h2><%= session[:username] %> has placed a wager of $<%= session[:wager] %></h2></div>
+<% end %>
+  <% if session[:show_dealer_hand] == false %>
+    <div><h2>Dealer Hand: Showing <%= session[:dealer_hand_total] %></h2></div>
+    <div style="
+      margin: 5px;
+      width: 223px;
+      height: 312px;
+      background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
+      background-repeat: no-repeat;
+      background-position: -88px -1286px;
+      display: inline-block
+      ">
     </div>
+    <div style="
+      margin: 5px;
+      width: 223px;
+      height: 312px;
+      background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
+      background-repeat: no-repeat;
+      background-position: <%= session[:dealer_hand][1][2] %>px <%= session[:dealer_hand][1][3] %>px;
+      display: inline-block
+      ">
+    </div>
+  <% else %>
+    <div><h2>Dealer Hand: <%= session[:dealer_hand_total] %></h2></div>
+    <% session[:dealer_hand].each do |card| %>
+      <div style="
+        margin: 5px;
+        width: 223px;
+        height: 312px;
+        background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
+        background-repeat: no-repeat;
+        background-position: <%= card[2] %>px <%= card[3] %>px;
+        display: inline-block
+        ">
+      </div>
+    <% end %>
   <% end %>
+  <div><h2><%= session[:username] %>'s Hand: <%= session[:player_hand_total] %></h2></div>
+<% session[:player_hand].each do |card| %>
+  <div style="
+    margin: 5px;
+    width: 223px;
+    height: 312px;
+    background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
+    background-repeat: no-repeat;
+    background-position: <%= card[2] %>px <%= card[3] %>px;
+    display: inline-block
+    ">
+  </div>
+<% end %>
+<% if session[:player_turn] && !session[:game_over] %>
+  <div>Would you like to hit or stay?</div>
+  <form action="/player_turn" method="post" class="form-inline">
+    <button type="submit" class="btn btn-success" name="player_move" value="hit">Hit</button>
+    <button type="submit" class="btn btn-danger" name="player_move" value="stay">Stay</button>
+  </form>
+<% end %>
