@@ -12,53 +12,17 @@
 <% end %>
   <% if session[:show_dealer_hand] == false %>
     <div><h2>Dealer Hand: Showing <%= hand_total([session[:dealer_hand][1]]) %></h2></div>
-    <div style="
-      margin: 5px;
-      width: 223px;
-      height: 312px;
-      background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
-      background-repeat: no-repeat;
-      background-position: -88px -1286px;
-      display: inline-block
-      ">
-    </div>
-    <div style="
-      margin: 5px;
-      width: 223px;
-      height: 312px;
-      background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
-      background-repeat: no-repeat;
-      background-position: <%= session[:dealer_hand][1][2] %>px <%= session[:dealer_hand][1][3] %>px;
-      display: inline-block
-      ">
-    </div>
+    <img src="/images/cards/cover.jpg" />
+    <img src="/images/cards/<%= card_image(session[:dealer_hand][1]) %>" />
   <% else %>
     <div><h2>Dealer Hand: <%= hand_total(session[:dealer_hand]) %></h2></div>
     <% session[:dealer_hand].each do |card| %>
-      <div style="
-        margin: 5px;
-        width: 223px;
-        height: 312px;
-        background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
-        background-repeat: no-repeat;
-        background-position: <%= card[2] %>px <%= card[3] %>px;
-        display: inline-block
-        ">
-      </div>
+      <img src="/images/cards/<%= card_image(card) %>" />
     <% end %>
   <% end %>
   <div><h2><%= session[:username] %>'s Hand: <%= hand_total(session[:player_hand]) %></h2></div>
 <% session[:player_hand].each do |card| %>
-  <div style="
-    margin: 5px;
-    width: 223px;
-    height: 312px;
-    background-image: url('http://rickpeyton.s3.amazonaws.com/deck.png');
-    background-repeat: no-repeat;
-    background-position: <%= card[2] %>px <%= card[3] %>px;
-    display: inline-block
-    ">
-  </div>
+  <img src="/images/cards/<%= card_image(card) %>" />
 <% end %>
 <% if session[:player_turn] && !session[:game_over] %>
   <div>Would you like to hit or stay?</div>

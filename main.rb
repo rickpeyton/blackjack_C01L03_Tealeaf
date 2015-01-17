@@ -6,23 +6,13 @@ set :sessions, true
 
 def make_cards
   @cards = []
-  %w(Clubs Hearts Spades Diamonds).each do |suit|
-    x = -88
-    case
-    when suit == 'Clubs'
-      y = -35
-    when suit == 'Hearts'
-      y = -348
-    when suit == 'Spades'
-      y = -661
-    when suit == 'Diamonds'
-      y = -974
-    end
-    %w(Ace 2 3 4 5 6 7 8 9 10 Jack King Queen).each do |card|
-      @cards << [suit, card, x, y]
-      x -= 223
-    end
-  end
+  # %w(Clubs Hearts Spades Diamonds).each do |suit|
+  #   %w(Ace 2 3 4 5 6 7 8 9 10 Jack King Queen).each do |card|
+  #     @cards << [suit, card]
+  #   end
+  # end
+  @cards = %w(Clubs Hearts Spades Diamonds).product(
+             %w(Ace 2 3 4 5 6 7 8 9 10 Jack King Queen))
 end
 
 def deal_4_cards
@@ -45,6 +35,10 @@ def initialize_game
 end
 
 helpers do
+  def card_image(card)
+    card[0].downcase + '_' + card[1].downcase + '.jpg'
+  end
+
   def hand_total(cards)
     values = cards.map{ |card| card[1] }
     total = 0
@@ -168,7 +162,7 @@ end
 
 post '/play_again' do
   if params[:play_again] == 'yes'
-    initialize_game
+    session[:cards] = nil
     redirect '/bet'
   else
     redirect '/game_over'
