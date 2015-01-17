@@ -39,31 +39,31 @@ def initialize_game
   session[:dealer_hand] = []
   session[:player_hand] = []
   deal_4_cards
-  session[:player_hand_total] = hand_total(session[:player_hand])
-  session[:dealer_hand_total] = hand_total([session[:dealer_hand][1]])
   session[:player_turn] = true
   session[:game_over] = false
   session[:message] = ''
 end
 
-def hand_total(cards)
-  values = cards.map{ |card| card[1] }
-  total = 0
-  values.each do |value|
-    if value == 'Ace'
-      total += 11
-    else
-      total += (value.to_i == 0 ? 10 : value.to_i)
+helpers do
+  def hand_total(cards)
+    values = cards.map{ |card| card[1] }
+    total = 0
+    values.each do |value|
+      if value == 'Ace'
+        total += 11
+      else
+        total += (value.to_i == 0 ? 10 : value.to_i)
+      end
     end
-  end
 
-  # Correct for Aces
-  values.select{ |value| value == 'Ace'}.count.times do
-    break if total <= 21
-    total -= 10
-  end
+    # Correct for Aces
+    values.select{ |value| value == 'Ace'}.count.times do
+      break if total <= 21
+      total -= 10
+    end
 
-  total
+    total
+  end
 end
 
 def bust
@@ -92,9 +92,9 @@ end
 
 def pick_winner
   session[:game_over] = true
-  if session[:player_hand_total] == session[:dealer_hand_total]
+  if hand_total(session[:player_hand]) == hand_total(session[:dealer_hand])
     session[:message] = "Push. #{session[:username]} receives his bet back"
-  elsif session[:player_hand_total] > session[:dealer_hand_total]
+  elsif hand_total(session[:player_hand]) > hand_total(session[:dealer_hand])
     session[:message] = "#{session[:username]} wins $#{session[:wager]}!"
     session[:user_money] += session[:wager]
   else
@@ -105,14 +105,12 @@ end
 
 def dealer_turn
   session[:show_dealer_hand] = true
-  session[:dealer_hand_total] = hand_total(session[:dealer_hand])
-  while session[:dealer_hand_total] < 17
+  while hand_total(session[:dealer_hand]) < 17
     session[:dealer_hand] << session[:cards].pop
-    session[:dealer_hand_total] = hand_total(session[:dealer_hand])
   end
-  if session[:dealer_hand_total] > 21
+  if hand_total(session[:dealer_hand]) > 21
     dealer_bust
-  elsif session[:dealer_hand_total] == 21
+  elsif hand_total(session[:dealer_hand]) == 21
     dealer_blackjack
   else
     pick_winner
@@ -155,10 +153,9 @@ end
 post '/player_turn' do
   if params[:player_move] == 'hit'
     session[:player_hand] << session[:cards].pop
-    session[:player_hand_total] = hand_total(session[:player_hand])
-    if session[:player_hand_total] > 21
+    if hand_total(session[:player_hand]) > 21
       bust
-    elsif session[:player_hand_total] == 21
+    elsif hand_total(session[:player_hand]) == 21
       player_blackjack
     end
     redirect '/game'
@@ -185,7 +182,7 @@ end
 get '/game' do
   if session[:cards] == nil
     initialize_game
-    player_blackjack if session[:player_hand_total] == 21
+    player_blackjack if hand_total(session[:player_hand]) == 21
   end
   if session[:user_money] > 0
     erb :game

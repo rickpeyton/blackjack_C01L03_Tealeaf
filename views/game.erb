@@ -11,7 +11,7 @@
   <div><h2><%= session[:username] %> has placed a wager of $<%= session[:wager] %></h2></div>
 <% end %>
   <% if session[:show_dealer_hand] == false %>
-    <div><h2>Dealer Hand: Showing <%= session[:dealer_hand_total] %></h2></div>
+    <div><h2>Dealer Hand: Showing <%= hand_total([session[:dealer_hand][1]]) %></h2></div>
     <div style="
       margin: 5px;
       width: 223px;
@@ -33,7 +33,7 @@
       ">
     </div>
   <% else %>
-    <div><h2>Dealer Hand: <%= session[:dealer_hand_total] %></h2></div>
+    <div><h2>Dealer Hand: <%= hand_total(session[:dealer_hand]) %></h2></div>
     <% session[:dealer_hand].each do |card| %>
       <div style="
         margin: 5px;
@@ -47,7 +47,7 @@
       </div>
     <% end %>
   <% end %>
-  <div><h2><%= session[:username] %>'s Hand: <%= session[:player_hand_total] %></h2></div>
+  <div><h2><%= session[:username] %>'s Hand: <%= hand_total(session[:player_hand]) %></h2></div>
 <% session[:player_hand].each do |card| %>
   <div style="
     margin: 5px;
