@@ -111,6 +111,11 @@ def dealer_turn
   end
 end
 
+before do
+  @show_hit_or_stay_buttons = true
+  @show_start_dealer_turn = false
+end
+
 get '/' do
   if session[:username]
     redirect '/bet'
@@ -120,14 +125,14 @@ get '/' do
 end
 
 post '/' do
-  if params[:username] == ''
-    @error = 'You must enter a name'
-    erb :get_name
-  else
-    session[:username] = params[:username]
-    session[:user_money] = 500
-    redirect '/bet'
+  validate_name = /^[^a-zA-Z]{1}|[^a-zA-Z\s]/
+  if params[:username].empty? || (params[:username] !~ validate_name) == false
+    @error = 'Name must start with a letter and contain only letters and spaces.'
+    halt erb :get_name
   end
+  session[:username] = params[:username]
+  session[:user_money] = 500
+  redirect '/bet'
 end
 
 get '/bet' do
@@ -135,13 +140,15 @@ get '/bet' do
 end
 
 post '/bet' do
-  if params[:wager].to_i > 0 && params[:wager].to_i <= session[:user_money]
-    session[:wager] = params[:wager].to_i
-    redirect '/game'
-  else
-    @error = "Your wager must be > 0 and less than $#{session[:user_money]}.00"
-    erb :get_bet
+  validate_wager = /^[^1-9]{1}|[^0-9]/
+  if params[:wager].to_i < 1 ||
+       params[:wager].to_i > session[:user_money] ||
+       (params[:wager] !~ validate_wager) == false
+    @error = "Your wager be a whole number greater than 0 and less than $#{session[:user_money]}"
+    halt erb :get_bet
   end
+  session[:wager] = params[:wager].to_i
+  redirect '/game'
 end
 
 post '/player_turn' do
@@ -174,15 +181,59 @@ get '/game_over' do
 end
 
 get '/game' do
-  if session[:cards] == nil
-    initialize_game
-    player_blackjack if hand_total(session[:player_hand]) == 21
+  initialize_game
+  erb :game
+end
+
+post '/game/player/hit' do
+  session[:player_hand] << session[:cards].pop
+  player_total = hand_total(session[:player_hand])
+  if player_total == 21
+    @success = "Congratulations, #{session[:username]}! Blackjack!"
+    @show_hit_or_stay_buttons = false
+  elsif player_total > 21
+    @error = "Bust! Sorry #{session[:username]}, Dealer wins."
+    @show_hit_or_stay_buttons = false
   end
-  if session[:user_money] > 0
-    erb :game
+  erb :game
+end
+
+post '/game/player/stay' do
+  @success = "#{session[:username]} stays at #{hand_total(session[:player_hand])}"
+  @show_hit_or_stay_buttons = false
+  @show_start_dealer_turn_button = true
+  erb :game
+end
+
+post '/game/dealer/turn' do
+  session[:show_dealer_hand] = true
+  @show_hit_or_stay_buttons = false
+  while hand_total(session[:dealer_hand]) < 17
+    session[:dealer_hand] << session[:cards].pop
+  end
+  if hand_total(session[:dealer_hand]) > 21
+    @success = "Dealer busts. #{session[:username]} wins!"
+  elsif hand_total(session[:dealer_hand]) == 21
+    @error = "Dealer has Blackjack! #{session[:username]} loses."
   else
-    redirect '/game_over'
+    redirect '/game/over'
   end
+  erb :game
+end
+
+get '/game/over' do
+  @show_hit_or_stay_buttons = false
+  player = hand_total(session[:player_hand])
+  dealer = hand_total(session[:dealer_hand])
+  user = session[:username]
+  if player == dealer
+    @error = "Push. #{user} receives hit bet back."
+  elsif player > dealer
+    @success = "#{user} wins $#{session[:wager]}!"
+  else
+    @error = "Dealer wins. #{user} loses $#{session[:wager]}"
+  end
+  erb :game
 end
 
 get '/start_over' do

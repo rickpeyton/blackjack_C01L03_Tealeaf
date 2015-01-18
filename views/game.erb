@@ -1,3 +1,10 @@
+<% if @show_start_dealer_turn_button %>
+  <div>
+    <form action="/game/dealer/turn" method="post">
+      <input type='submit' class='btn btn-success' value='Start Dealer Turn'>
+    </form>
+  </div>
+<% end %>
 <% if session[:message] != '' %>
   <div><h1><%= session[:message] %></h1></div>
   <div>
@@ -8,26 +15,32 @@
     </form>
   </div>
 <% else %>
-  <div><h2><%= session[:username] %> has placed a wager of $<%= session[:wager] %></h2></div>
+  <div><h2>Welcome to Blackjack!</h2></div>
 <% end %>
+<div class='well'>
   <% if session[:show_dealer_hand] == false %>
-    <div><h2>Dealer Hand: Showing <%= hand_total([session[:dealer_hand][1]]) %></h2></div>
-    <img src="/images/cards/cover.jpg" />
-    <img src="/images/cards/<%= card_image(session[:dealer_hand][1]) %>" />
+    <div><h3>Dealer Hand: Showing <%= hand_total([session[:dealer_hand][1]]) %></h3></div>
+    <img class='card-image' src="/images/cards/cover.jpg" />
+    <img class='card-image' src="/images/cards/<%= card_image(session[:dealer_hand][1]) %>" />
   <% else %>
-    <div><h2>Dealer Hand: <%= hand_total(session[:dealer_hand]) %></h2></div>
+    <div><h3>Dealer Hand: <%= hand_total(session[:dealer_hand]) %></h3></div>
     <% session[:dealer_hand].each do |card| %>
-      <img src="/images/cards/<%= card_image(card) %>" />
+      <img class='card-image' src="/images/cards/<%= card_image(card) %>" />
     <% end %>
   <% end %>
-  <div><h2><%= session[:username] %>'s Hand: <%= hand_total(session[:player_hand]) %></h2></div>
-<% session[:player_hand].each do |card| %>
-  <img src="/images/cards/<%= card_image(card) %>" />
-<% end %>
-<% if session[:player_turn] && !session[:game_over] %>
-  <div>Would you like to hit or stay?</div>
-  <form action="/player_turn" method="post" class="form-inline">
-    <button type="submit" class="btn btn-success" name="player_move" value="hit">Hit</button>
-    <button type="submit" class="btn btn-danger" name="player_move" value="stay">Stay</button>
+</div>
+<div class='well'>
+  <div><h3><%= session[:username] %>'s Hand: <%= hand_total(session[:player_hand]) %></h3></div>
+  <% session[:player_hand].each do |card| %>
+    <img class='card-image' src="/images/cards/<%= card_image(card) %>" />
+  <% end %>
+</div>
+<% if @show_hit_or_stay_buttons %>
+  <div><%= session[:username] %>'s hand is <%= hand_total(session[:player_hand]) %>. Hit or stay?</div>
+  <form action="/game/player/hit" method="post" class="form-inline hit-stay-form">
+    <input type="submit" class="btn btn-success" value="Hit">
+  </form>
+  <form action="/game/player/stay" method="post" class="form-inline hit-stay-form">
+    <input type="submit" class="btn btn-danger" value="Stay">
   </form>
 <% end %>
