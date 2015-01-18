@@ -4,6 +4,9 @@ require 'pry'
 
 set :sessions, true
 
+BLACKJACK_AMOUNT = 21
+DEALER_HIT_TO = 17
+
 def make_cards
   @cards = []
   # %w(Clubs Hearts Spades Diamonds).each do |suit|
@@ -52,11 +55,35 @@ helpers do
 
     # Correct for Aces
     values.select{ |value| value == 'Ace'}.count.times do
-      break if total <= 21
+      break if total <= BLACKJACK_AMOUNT
       total -= 10
     end
 
     total
+  end
+
+  def winner!(message)
+    @show_play_again_buttons = true
+    @show_hit_or_stay_buttons = false
+    @success = "<strong>You won!</strong> #{message}"
+    if hand_total(session[:player_hand]) == BLACKJACK_AMOUNT
+      session[:user_money] += (session[:wager] * 1.5).to_i
+    else
+      session[:user_money] += session[:wager].to_i
+    end
+  end
+
+  def loser!(message)
+    @show_play_again_buttons = true
+    @show_hit_or_stay_buttons = false
+    @error = "<strong>You lost...</strong> #{message}"
+    session[:user_money] -= session[:wager].to_i
+  end
+
+  def tie!(message)
+    @show_play_again_buttons = true
+    @show_hit_or_stay_buttons = false
+    @success = "<strong>Push...</strong> #{message}"
   end
 end
 
@@ -99,12 +126,12 @@ end
 
 def dealer_turn
   session[:show_dealer_hand] = true
-  while hand_total(session[:dealer_hand]) < 17
+  while hand_total(session[:dealer_hand]) < DEALER_HIT_TO
     session[:dealer_hand] << session[:cards].pop
   end
-  if hand_total(session[:dealer_hand]) > 21
+  if hand_total(session[:dealer_hand]) > BLACKJACK_AMOUNT
     dealer_bust
-  elsif hand_total(session[:dealer_hand]) == 21
+  elsif hand_total(session[:dealer_hand]) == BLACKJACK_AMOUNT
     dealer_blackjack
   else
     pick_winner
@@ -113,7 +140,6 @@ end
 
 before do
   @show_hit_or_stay_buttons = true
-  @show_start_dealer_turn = false
 end
 
 get '/' do
@@ -154,9 +180,9 @@ end
 post '/player_turn' do
   if params[:player_move] == 'hit'
     session[:player_hand] << session[:cards].pop
-    if hand_total(session[:player_hand]) > 21
+    if hand_total(session[:player_hand]) > BLACKJACK_AMOUNT
       bust
-    elsif hand_total(session[:player_hand]) == 21
+    elsif hand_total(session[:player_hand]) == BLACKJACK_AMOUNT
       player_blackjack
     end
     redirect '/game'
@@ -182,18 +208,19 @@ end
 
 get '/game' do
   initialize_game
+  if hand_total(session[:player_hand]) == BLACKJACK_AMOUNT
+    winner!("#{session[:username]} was dealt Blackjack.")
+  end
   erb :game
 end
 
 post '/game/player/hit' do
   session[:player_hand] << session[:cards].pop
   player_total = hand_total(session[:player_hand])
-  if player_total == 21
-    @success = "Congratulations, #{session[:username]}! Blackjack!"
-    @show_hit_or_stay_buttons = false
-  elsif player_total > 21
-    @error = "Bust! Sorry #{session[:username]}, Dealer wins."
-    @show_hit_or_stay_buttons = false
+  if player_total == BLACKJACK_AMOUNT
+    winner!("#{session[:username]} has Blackjack.")
+  elsif player_total > BLACKJACK_AMOUNT
+    loser!("#{session[:username]} busted with #{player_total}")
   end
   erb :game
 end
@@ -201,37 +228,41 @@ end
 post '/game/player/stay' do
   @success = "#{session[:username]} stays at #{hand_total(session[:player_hand])}"
   @show_hit_or_stay_buttons = false
-  @show_start_dealer_turn_button = true
-  erb :game
+  redirect '/game/dealer'
 end
 
-post '/game/dealer/turn' do
+get '/game/dealer' do
   session[:show_dealer_hand] = true
-  @show_hit_or_stay_buttons = false
-  while hand_total(session[:dealer_hand]) < 17
-    session[:dealer_hand] << session[:cards].pop
-  end
-  if hand_total(session[:dealer_hand]) > 21
-    @success = "Dealer busts. #{session[:username]} wins!"
-  elsif hand_total(session[:dealer_hand]) == 21
-    @error = "Dealer has Blackjack! #{session[:username]} loses."
+  dealer_total = hand_total(session[:dealer_hand])
+  if dealer_total == BLACKJACK_AMOUNT
+    loser!("Dealer has Blackjack.")
+  elsif dealer_total > BLACKJACK_AMOUNT
+    winner!("Dealer busts with #{dealer_total}")
+  elsif dealer_total < DEALER_HIT_TO
+    @show_dealer_hit_button = true
   else
-    redirect '/game/over'
+    redirect '/game/compare'
   end
+
   erb :game
 end
 
-get '/game/over' do
+post '/game/dealer/hit' do
+  session[:dealer_hand] << session[:cards].pop
+  redirect '/game/dealer'
+end
+
+get '/game/compare' do
   @show_hit_or_stay_buttons = false
   player = hand_total(session[:player_hand])
   dealer = hand_total(session[:dealer_hand])
   user = session[:username]
   if player == dealer
-    @error = "Push. #{user} receives hit bet back."
+    tie!("#{user} and Dealer both stayed at #{player}.")
   elsif player > dealer
-    @success = "#{user} wins $#{session[:wager]}!"
+    winner!("#{user} stayed at #{player} and Dealer stayed at #{dealer}.")
   else
-    @error = "Dealer wins. #{user} loses $#{session[:wager]}"
+    loser!("Dealer stayed at #{dealer} and #{user} stayed at #{player}.")
   end
   erb :game
 end
