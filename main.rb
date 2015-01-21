@@ -6,6 +6,7 @@ set :sessions, true
 
 BLACKJACK_AMOUNT = 21
 DEALER_HIT_TO = 17
+INITIAL_POT_AMOUNT = 500
 
 def make_cards
   @cards = []
@@ -98,7 +99,7 @@ post '/' do
     halt erb :get_name
   end
   session[:username] = params[:username]
-  session[:user_money] = 500
+  session[:user_money] = INITIAL_POT_AMOUNT
   redirect '/bet'
 end
 
@@ -135,10 +136,12 @@ post '/game/player/hit' do
   player_total = hand_total(session[:player_hand])
   if player_total == BLACKJACK_AMOUNT
     winner!("#{session[:username]} has Blackjack.")
+    halt erb :game
   elsif player_total > BLACKJACK_AMOUNT
     loser!("#{session[:username]} busted with #{player_total}")
+    halt erb :game
   end
-  erb :game
+  erb :game, layout: false
 end
 
 post '/game/player/stay' do
@@ -149,18 +152,21 @@ end
 
 get '/game/dealer' do
   session[:show_dealer_hand] = true
+  @show_hit_or_stay_buttons = false
   dealer_total = hand_total(session[:dealer_hand])
   if dealer_total == BLACKJACK_AMOUNT
     loser!("Dealer has Blackjack.")
+    halt erb :game
   elsif dealer_total > BLACKJACK_AMOUNT
     winner!("Dealer busts with #{dealer_total}")
+    halt erb :game
   elsif dealer_total < DEALER_HIT_TO
     @show_dealer_hit_button = true
   else
     redirect '/game/compare'
   end
 
-  erb :game
+  erb :game, layout: false
 end
 
 post '/game/dealer/hit' do
