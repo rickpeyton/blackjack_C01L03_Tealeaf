@@ -1,4 +1,11 @@
 <div id='game'>
+  <%if @loser %>
+    <div class="alert alert-error"><%= @loser %></div>
+  <% end %>
+  <%if @winner %>
+    <div class="alert alert-success"><%= @winner %></div>
+  <% end %>
+
   <% if @show_play_again_buttons %>
     <% if session[:user_money] > 0 %>
       <p>Would you like to play again?</p>

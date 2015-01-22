@@ -58,7 +58,7 @@ helpers do
   def winner!(message)
     @show_play_again_buttons = true
     @show_hit_or_stay_buttons = false
-    @success = "<strong>You won!</strong> #{message}"
+    @winner = "<strong>You won!</strong> #{message}"
     if hand_total(session[:player_hand]) == BLACKJACK_AMOUNT
       session[:user_money] += (session[:wager] * 1.5).to_i
     else
@@ -69,14 +69,14 @@ helpers do
   def loser!(message)
     @show_play_again_buttons = true
     @show_hit_or_stay_buttons = false
-    @error = "<strong>You lost...</strong> #{message}"
+    @loser = "<strong>You lost...</strong> #{message}"
     session[:user_money] -= session[:wager].to_i
   end
 
   def tie!(message)
     @show_play_again_buttons = true
     @show_hit_or_stay_buttons = false
-    @success = "<strong>Push...</strong> #{message}"
+    @winner = "<strong>Push...</strong> #{message}"
   end
 end
 
@@ -136,10 +136,8 @@ post '/game/player/hit' do
   player_total = hand_total(session[:player_hand])
   if player_total == BLACKJACK_AMOUNT
     winner!("#{session[:username]} has Blackjack.")
-    halt erb :game
   elsif player_total > BLACKJACK_AMOUNT
     loser!("#{session[:username]} busted with #{player_total}")
-    halt erb :game
   end
   erb :game, layout: false
 end
@@ -156,10 +154,8 @@ get '/game/dealer' do
   dealer_total = hand_total(session[:dealer_hand])
   if dealer_total == BLACKJACK_AMOUNT
     loser!("Dealer has Blackjack.")
-    halt erb :game
   elsif dealer_total > BLACKJACK_AMOUNT
     winner!("Dealer busts with #{dealer_total}")
-    halt erb :game
   elsif dealer_total < DEALER_HIT_TO
     @show_dealer_hit_button = true
   else
@@ -186,7 +182,7 @@ get '/game/compare' do
   else
     loser!("Dealer stayed at #{dealer} and #{user} stayed at #{player}.")
   end
-  erb :game
+  erb :game, layout: false
 end
 
 get '/start_over' do
